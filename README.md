@@ -193,3 +193,93 @@ body {
 
 ```
 Ao rodar novamente o projeto através do index.js, teremos a página atualizada, apresentando um campo de input e um botão. Caso sua aplicação não esteja da mesma forma, favor revisar o código
+
+## Integrando o Socket.IO
+
+O [socket.io](http://socket.io) é composto de duas partes :
+
+- Um servidor que se integra com servidor HTTP Node.JS
+- Uma biblioteca cliente que carrega no lado do navegador
+
+Vamos instalar um módulo apenas por enquanto
+
+```css
+npm install socket.io
+```
+
+Isso instalará o módulo e adicionará a dependência ao package.json. Agora vamos editar o index.js para adiciona-lo
+
+```jsx
+import express from 'express';
+import { createServer } from 'node:http';
+import { fileURLToPath } from 'node:url';
+import { dirname,join } from 'node:path';
+import { Server } from 'socket.io'; //new
+
+const app = express();
+const server = createServer(app);
+const io = new Server(server); //new
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, '/templates/index.html'));
+});
+
+io.on('connection', (socket) => { //new
+    console.log('a user connected');
+});
+
+server.listen(3000, () => {
+  console.log('server running at http://localhost:3000');
+});
+```
+
+Observe que uma nova intância de [socket.io](http://socket.io) passando o server. Em seguida, executo o evento connection em busca de sockets de entrada e registro no console
+
+Agora em index.html adicione o seguinte snippet antes do body
+
+```html
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+</script>
+```
+
+Observe que não estou especificando nenhuma URl quando chamo io(), pois o padrão é tentar se conectar ao host que serve a página
+
+Agora, ao executar novamente o index.js, “a user connected” será exibida no terminal 
+
+Cada soquete também dispara um `disconnect`evento especial:
+
+```jsx
+import express from 'express';
+import { createServer } from 'node:http';
+import { fileURLToPath } from 'node:url';
+import { dirname,join } from 'node:path';
+import { Server } from 'socket.io';
+
+const app = express();
+const server = createServer(app);
+const io = new Server(server);
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, '/templates/index.html'));
+});
+
+io.on('connection', (socket) => {
+    console.log('a user connected');
+    socket.on('disconnect', () => {
+      console.log('user disconnected');
+    });
+
+});
+
+server.listen(3000, () => {
+  console.log('server running at http://localhost:3000');
+});
+```
+
+Ao atualizar a página várias vezes, podemos ver que no output, a mensagem de usuário desconectado será exibida, após isso, será conectado novamente
