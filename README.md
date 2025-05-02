@@ -283,3 +283,15 @@ server.listen(3000, () => {
 ```
 
 Ao atualizar a página várias vezes, podemos ver que no output, a mensagem de usuário desconectado será exibida, após isso, será conectado novamente
+
+## ♻️ **Reestruturação de Arquivos para Boas Práticas**
+
+Para atender boas práticas de organização e clareza no projeto, foram realizadas as seguintes alterações:
+
+- O arquivo originalmente chamado `index.js` (localizado na raiz do projeto) foi renomeado para `main.js`. Essa mudança visa deixar claro que se trata do arquivo principal de execução do servidor.
+
+- Foi criado um novo arquivo `index.js`, agora localizado em um diretório apropriado (como `public/js/`), exclusivamente para a lógica da página `index.html`.
+
+- Os scripts que estavam embutidos no `index.html` foram removidos e movidos para esse novo `index.js`, centralizando e organizando melhor o código JavaScript da interface.
+
+Essas mudanças tornam a estrutura do projeto mais compreensível e alinhada com boas práticas de desenvolvimento web.
