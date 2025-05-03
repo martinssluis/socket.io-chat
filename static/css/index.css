@@ -16,27 +16,40 @@ body {
     flex: 1;
     overflow-y: auto;
     background-color: #1e1e2f;
+    display: flex;
+    flex-direction: column;
+    /* Garante alinhamento vertical */
 }
 
+/* Estilo base das mensagens */
 #messages li {
     padding: 0.6rem 1rem;
     margin-bottom: 0.5rem;
     border-radius: 0.75rem;
-    max-width: 80%;
     word-break: break-word;
     font-size: 0.95rem;
     line-height: 1.4;
+    width: fit-content;
+    /* ← ADICIONADO: ajusta a largura ao conteúdo */
+    max-width: 80%;
+    /* ← MANTIDO: impede mensagens muito largas */
+    display: inline-block;
+    /* ← ADICIONADO: garante que use apenas o espaço necessário */
 }
 
+/* Mensagens do bot/alinhadas à esquerda */
 #messages li:nth-child(odd) {
     background: #2a2f45;
     margin-right: auto;
+    /* ← MANTIDO: alinha à esquerda */
     color: #e0e0e0;
 }
 
+/* Mensagens do usuário/alinhadas à direita */
 #messages li:nth-child(even) {
     background: #3b89c9;
     margin-left: auto;
+    /* ← MANTIDO: alinha à direita */
     color: #fff;
 }
 
@@ -44,9 +57,12 @@ body {
     background: #252836;
     padding: 0.75rem;
     display: flex;
-    position: sticky;
+    position: fixed;
     bottom: 0;
+    left: 0;
+    right: 0;
     border-top: 1px solid #2e2e3f;
+    z-index: 10;
 }
 
 #input {
