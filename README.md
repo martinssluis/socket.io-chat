@@ -295,3 +295,157 @@ Para atender boas práticas de organização e clareza no projeto, foram realiza
 - Os scripts que estavam embutidos no `index.html` foram removidos e movidos para esse novo `index.js`, centralizando e organizando melhor o código JavaScript da interface.
 
 Essas mudanças tornam a estrutura do projeto mais compreensível e alinhada com boas práticas de desenvolvimento web.
+
+## ## Emitindo eventos
+
+A ideia principal por trás do [socket.io](http://socket.io) é que você pode enviar e receber quaisquer eventos que desejar, com quaisquer dados que desejar. Qualquer objeto que possa ser codificado como JSON serve, e dados binários também são suportados.
+
+Vamos fazer com que, quando o usuário digitar uma mensagem, o servidor receba como um evento  chat message. 
+
+Nosso index.js agora ficará assim:
+
+```jsx
+const socket = io();
+
+const form = document.getElementById('form');
+const input = document.getElementById('input');
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (input.value) {
+    socket.emit('chat message', input.value);
+    input.value = '';
+  }
+});
+```
+
+Nosso main.js ficara assim:
+
+``` 
+import express from 'express';
+import { createServer } from 'node:http';
+import { fileURLToPath } from 'node:url';
+import { dirname,join } from 'node:path';
+import { Server } from 'socket.io';
+
+const app = express();
+const server = createServer(app);
+const io = new Server(server);
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Configuração CORRETA para arquivos estáticos
+app.use('/static', express.static(join(__dirname, 'static'))); // Serve /static/css e /static/js
+
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, '/templates/index.html'));
+});
+
+io.on('connection', (socket) => {
+  console.log('a user connected');
+  
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+    });
+
+  socket.on('chat message', (msg) => {
+    console.log('message: ' + msg);
+    io.emit('chat message', msg);  
+});
+
+});
+
+server.listen(3000, () => {
+  console.log('server running at http://localhost:3000');
+});
+```
+*_Outras alterações e correções poderão ser vistos através dos commits do projeto_*
+
+## Transmição
+## Transmissão
+
+O próximo objetivo é emitir o evento do servidor para o resto dos usuários
+
+Para enviar um evento para todos, o [Socket.io](http://Socket.io) nos fornece o io.emit()
+
+```jsx
+// this will emit the event to all connected sockets
+io.emit('hello', 'world');
+```
+
+Se você quiser enviar uma mensagem para todos, exceto para um determinado socket anterior, temos o broadcast  para emissão desse socket
+
+```jsx
+io.on('conecton', (socket) => {
+	socket.broadcast.emit('hi');
+	});
+```
+
+Os arquivos ficaram assim :
+```jsx
+import express from 'express';
+import { createServer } from 'node:http';
+import { fileURLToPath } from 'node:url';
+import { dirname,join } from 'node:path';
+import { Server } from 'socket.io';
+
+const app = express();
+const server = createServer(app);
+const io = new Server(server);
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Configuração CORRETA para arquivos estáticos
+app.use('/static', express.static(join(__dirname, 'static'))); // Serve /static/css e /static/js
+
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, '/templates/index.html'));
+});
+
+io.on('connection', (socket) => {
+  console.log('a user connected');
+
+  // Envia mensagem de boas-vindas apenas para o novo usuário
+  socket.emit('chat message', 'Welcome to socketio chat!');
+
+  // Envia mensagem para todos os usuários, exceto o novo usuário
+  socket.broadcast.emit('chat message', 'A new user has joined the chat');
+  
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+    });
+
+  socket.on('chat message', (msg) => {
+    io.emit('chat message', msg);  
+});
+
+});
+
+server.listen(3000, () => {
+  console.log('server running at http://localhost:3000');
+});
+```
+```jsx
+const socket = io();
+
+const form = document.getElementById('form');
+const input = document.getElementById('input');
+const messages = document.getElementById('messages');
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (input.value) {
+    socket.emit('chat message', input.value);
+    input.value = '';
+  }
+});
+
+socket.on('chat message', (msg) => {
+  const item = document.createElement('li');
+  item.textContent = msg;
+  messages.appendChild(item);
+  window.scrollTo(0, document.body.scrollHeight);
+}
+);
+```
+*_O style da página foi alteraado para melhor visualização_*
