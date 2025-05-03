@@ -19,13 +19,18 @@ app.get('/', (req, res) => {
 
 io.on('connection', (socket) => {
   console.log('a user connected');
+
+  // Envia mensagem de boas-vindas apenas para o novo usuário
+  socket.emit('chat message', 'Welcome to socketio chat!');
+
+  // Envia mensagem para todos os usuários, exceto o novo usuário
+  socket.broadcast.emit('chat message', 'A new user has joined the chat');
   
   socket.on('disconnect', () => {
     console.log('user disconnected');
     });
 
   socket.on('chat message', (msg) => {
-    console.log('message: ' + msg);
     io.emit('chat message', msg);  
 });
 
