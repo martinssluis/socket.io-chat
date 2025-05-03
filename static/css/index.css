@@ -1,54 +1,81 @@
 body {
     margin: 0;
-    padding-bottom: 3rem;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-#form {
-    background: rgba(0, 0, 0, 0.15);
-    padding: 0.25rem;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #1e1e2f;
+    color: #e0e0e0;
+    height: 100vh;
     display: flex;
-    height: 3rem;
-    box-sizing: border-box;
-    backdrop-filter: blur(10px);
-}
-
-#input {
-    border: none;
-    padding: 0 1rem;
-    flex-grow: 1;
-    border-radius: 2rem;
-    margin: 0.25rem;
-}
-
-#input:focus {
-    outline: none;
-}
-
-#form>button {
-    background: #333;
-    border: none;
-    padding: 0 1rem;
-    margin: 0.25rem;
-    border-radius: 3px;
-    outline: none;
-    color: #fff;
+    flex-direction: column;
 }
 
 #messages {
     list-style-type: none;
     margin: 0;
-    padding: 0;
-}
-
-#messages>li {
     padding: 0.5rem 1rem;
+    flex: 1;
+    overflow-y: auto;
+    background-color: #1e1e2f;
 }
 
-#messages>li:nth-child(odd) {
-    background: #efefef;
+#messages li {
+    padding: 0.6rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.75rem;
+    max-width: 80%;
+    word-break: break-word;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+#messages li:nth-child(odd) {
+    background: #2a2f45;
+    margin-right: auto;
+    color: #e0e0e0;
+}
+
+#messages li:nth-child(even) {
+    background: #3b89c9;
+    margin-left: auto;
+    color: #fff;
+}
+
+#form {
+    background: #252836;
+    padding: 0.75rem;
+    display: flex;
+    position: sticky;
+    bottom: 0;
+    border-top: 1px solid #2e2e3f;
+}
+
+#input {
+    border: none;
+    padding: 0.75rem 1rem;
+    flex-grow: 1;
+    border-radius: 1rem;
+    margin-right: 0.75rem;
+    font-size: 1rem;
+    background-color: #2e2e3f;
+    color: #e0e0e0;
+}
+
+#input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #3b89c980;
+}
+
+#form button {
+    background: #3b89c9;
+    color: white;
+    border: none;
+    padding: 0 1.5rem;
+    border-radius: 1rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease;
+}
+
+#form button:hover {
+    background: #3174aa;
 }
