@@ -10,16 +10,20 @@ const io = new Server(server);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Configuração CORRETA para arquivos estáticos
+app.use('/static', express.static(join(__dirname, 'static'))); // Serve /static/css e /static/js
+
 app.get('/', (req, res) => {
   res.sendFile(join(__dirname, '/templates/index.html'));
 });
 
 io.on('connection', (socket) => {
-    console.log('a user connected');
-    socket.on('disconnect', () => {
-      console.log('user disconnected');
+  console.log('a user connected');
+  
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
     });
-
+  
 });
 
 server.listen(3000, () => {
