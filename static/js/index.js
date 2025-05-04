@@ -3,6 +3,7 @@ const socket = io();
 const form = document.getElementById('form');
 const input = document.getElementById('input');
 const messages = document.getElementById('messages');
+const toggleButton = document.getElementById('toggle-btn');
 
 form.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -19,3 +20,14 @@ socket.on('chat message', (msg) => {
   window.scrollTo(0, document.body.scrollHeight);
 }
 );
+
+toggleButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (socket.connected) {
+      toggleButton.innerText = 'Connect';
+      socket.disconnect();
+    } else {
+      toggleButton.innerText = 'Disconnect';
+      socket.connect();
+    }
+  });
