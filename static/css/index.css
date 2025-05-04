@@ -95,3 +95,7 @@ body {
 #form button:hover {
     background: #3174aa;
 }
+
+#toggle-btn {
+    margin-left: 0.5rem;
+}
