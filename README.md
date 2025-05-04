@@ -449,3 +449,77 @@ socket.on('chat message', (msg) => {
 );
 ```
 *_O style da página foi alteraado para melhor visualização_*
+
+## Lidando com desconexões
+
+Agora vamos destacar duas propriedades importantes do Socket.io:
+
+1. Um cliente nem sempre está conectado
+2. Um servidor não armazena nenhum evento
+
+🚨
+Mesmo em uma rede estável, não é possível manter uma conexão ativa para sempre.
+O que significa que a aplicação precisa ser capaz de sincronizar o estado local do cliente com o estado global no servidor após uma desconexão temporária
+O cliente tentará se reconectar automaticamente após um pequeno atraso. No entanto, qualquer evento perdido durante o período de desconexão será efetivamente perdido para este cliente
+
+## Recuperação do estado de conexão
+Agora vamos destacar duas propriedades importantes do Socket.io:
+
+1. Um cliente nem sempre está conectado
+2. Um servidor não armazena nenhum evento
+
+Mesmo em uma rede estável, não é possível manter uma conexão ativa para sempre.
+
+O que significa que a aplicação precisa ser capaz de sincronizar o estado local do cliente com o estado global no servidor após uma desconexão temporária
+O cliente tentará se reconectar automaticamente após um pequeno atraso. No entanto, qualquer evento perdido durante o período de desconexão será efetivamente perdido para este cliente
+
+
+## Recuperação do estado de conexão
+
+Primeiro vamos lidar com desconexões fingindo que não houve desconexão: esse recurso é chamado de “Recuperação do estado de conexão”
+
+Este recurso  armazenará temporariamente todos os eventos enviados pelo servidor e tentará restaurar o estado de um cliente quando ele se reconectar:
+
+- Restaurar seus os “rooms”
+- Envia quaisquer eventos perdisos
+
+Deve ser habilitado no lado do servidor (main.js):
+
+```jsx
+const io = new Server(server, {
+  connectionStateRecovery: {}
+});
+```
+
+Alteração no index.html:
+
+```jsx
+<form id="form" action="">
+  <input id="input" autocomplete="off" /><button>Send</button>
+  <button id="toggle-btn">Disconnect</button>
+</form>
+```
+
+Alteração no index.js:
+
+```jsx
+const toggleButton = document.getElementById('toggle-btn');
+
+  toggleButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (socket.connected) {
+      toggleButton.innerText = 'Connect';
+      socket.disconnect();
+    } else {
+      toggleButton.innerText = 'Disconnect';
+      socket.connect();
+    }
+  });
+```
+
+Esse recurso é muito útil, porque ele não é implementado por padrão ?
+
+- Nem sempre funciona, por exemplo, se o servidor travar abruptamente ou for reiniciado, o estado do cliente não pode ser salvo
+- Nem sempre é possível habilitar esse recurso ao aumentar a escala
+
+Dito isso, é realmente um ótimo recurso, pois você não precisa sincronizar o estado do cliente após uma desconexão temporária (mudar wifi para 4g)
