@@ -1,7 +1,11 @@
+let conter = 0;
 const socket = io({
   auth: {
     serverOffset: 0
-  }
+  },
+  // habilita reconexão automática (retries)
+  ackTimeout: 10000,
+  retries: 3,
 });
 
 const form = document.getElementById('form');
@@ -12,7 +16,9 @@ const toggleButton = document.getElementById('toggle-btn');
 form.addEventListener('submit', (e) => {
   e.preventDefault();
   if (input.value) {
-    socket.emit('chat message', input.value);
+    // calcula um deslocamento único para cada mensagem
+    const clientOffset = '${socket.id}-S{counter++}';
+    socket.emit('chat message', input.value, clientOffset);
     input.value = '';
   }
 });
