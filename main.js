@@ -44,15 +44,21 @@ io.on('connection',async (socket) => {
 // Envia mensagem para todos os usuários, exceto o novo usuário
   socket.broadcast.emit('chat message', 'A new user has joined the chat');
 
-socket.on('chat message', async (msg) => {
+socket.on('chat message', async (msg, clientOffset, callback) => {
   let result;
   try {
-    result = await db.run('INSERT INTO messages (content) VALUES (?)', msg);
+    result = await db.run('INSERT INTO messages (content) VALUES (?)', msg, clientOffset);
   } catch (e) {
-    console.error('Failed to store message:', e);
-    return;
+    if (e.errno === 19 /* SQLITE_CONSTRAINT */ ) {
+        // a mensagem já foi inserida, então notificamos o cliente
+        callback();
+      } else {
+        // nada a fazer, apenas deixe o cliente tentar novamente
+      }
+      return;
   }
   io.emit('chat message', msg, result.lastID);
+  callback()
   });
 
   if (!socket.recovered) {
