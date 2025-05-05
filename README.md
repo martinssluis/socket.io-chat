@@ -756,3 +756,226 @@ server.listen(3000, () => {
 Como você pode ver no vídeo acima, ele funciona tanto após uma desconexão temporária quanto após uma atualização completa da página.
 
 A diferença com o recurso "Recuperação do estado de conexão" é que uma recuperação bem-sucedida pode não precisar acessar seu banco de dados principal (ela pode buscar as mensagens de um fluxo do Redis, por exemplo).
+
+## Entrega ao cliente
+
+Vamos ver como podemos garantir que o servidor sempre receba as mensagens enviadas pelos clientes
+
+<aside>
+🚨
+Por padrão o Socket.io fornece uma garantia de entrega “no máximo uma vez” (também conhecida como “disparar e esquecer”), o que significa que não haverá nova tentativa caso a mensagem não chegue ao servidor
+</aside>
+
+### Armazenado em buffer
+
+Quando um cliente é desconectado, qualquer chamada para socket.emit() é armazenada em buffer até a reconexão
+
+Esse comportamento pode ser totalmente suficiente para a aplicação. No entanto, existem alguns casos que uma mensagem pode ser perdida:
+
+- A conexão é interrompida enquanto o evento está sendo enviado
+- O servidor trava ou é reiniciado durante o processamento do evento
+- O banco de dados está temporariamente indisponível
+
+### Pelo menos uma vez
+
+Podemos implementar uma garantia de “pelo menos uma vez”:
+
+- Manualmente com uma configuração:
+
+```jsx
+function emit(socket, event, arg) {
+  socket.timeout(5000).emit(event, arg, (err) => {
+    if (err) {
+      // no ack from the server, let's retry
+      emit(socket, event, arg);
+    }
+  });
+}
+
+emit(socket, 'hello', 'world');
+```
+
+Ou com a opção *retries*
+
+```jsx
+const socket = io({
+  ackTimeout: 10000,
+  retries: 3
+});
+
+socket.emit('hello', 'world');
+```
+
+Em ambos os casos, o cliente tentará enviar a mensagem novamente até receber uma confirmação do servidor:
+
+```jsx
+io.on('connection', (socket) => {
+  socket.on('hello', (value, callback) => {
+    // once the event is successfully handled
+    callback();
+  });
+})
+```
+
+<aside>
+🚨Dica:
+Com a opção *retries*, a ordem das mensagens é garantida, pois elas são enfileiradas e enviadas uma a uma. Isso não acontece com a primeira opção
+</aside>
+
+### Apenas uma vez
+
+O problema com as novas tentativas é que o servidor pode receber a mesma mensagem várias vezes, então ele precisa de uma maneira de identificar exclusivamente cada mensagem e armazena-la apenas uma vez no banco de dados
+
+Vamos ver como implementar uma garantia “apenas uma vez” em nosso aplicativo de bate-papo
+
+Começaremos atribuindo um identificador exclusivo para cada mensagem no lado do cliente:
+
+index.js:
+
+```jsx
+let conter = 0;
+const socket = io({
+  auth: {
+    serverOffset: 0
+  },
+  // habilita reconexão automática (retries)
+  ackTimeout: 10000,
+  retries: 3,
+});
+
+const form = document.getElementById('form');
+const input = document.getElementById('input');
+const messages = document.getElementById('messages');
+const toggleButton = document.getElementById('toggle-btn');
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (input.value) {
+    // compute a unique offset for each message
+    const clientOffset = '${socket.id}-S{counter++}';
+    socket.emit('chat message', input.value, clientOffset);
+    input.value = '';
+  }
+});
+
+socket.on('chat message', (msg, serverOffset) => {
+  const item = document.createElement('li');
+  item.textContent = msg;
+  messages.appendChild(item);
+  window.scrollTo(0, document.body.scrollHeight);
+  socket.auth.serverOffset = serverOffset;
+}
+);
+
+toggleButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (socket.connected) {
+      toggleButton.innerText = 'Connect';
+      socket.disconnect();
+    } else {
+      toggleButton.innerText = 'Disconnect';
+      socket.connect();
+    }
+  });
+
+```
+
+O atributo [socket.id](http://socket.id) é um identificador aleatório de 20 caracteres que é atribuído a cada conexão.
+
+E então armazenamos esse deslocamento junto com a mensagem no lado do servidor:
+
+```jsx
+import express from 'express';
+import { createServer } from 'node:http';
+import { fileURLToPath } from 'node:url';
+import { dirname,join } from 'node:path';
+import { Server } from 'socket.io';
+import sqlite3 from 'sqlite3';
+import { open } from 'sqlite';
+
+const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  connectionStateRecovery: {}
+});
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Abre o banco e cria a tabela
+const db = await open({
+  filename: 'chat.db',
+  driver: sqlite3.Database
+});
+
+await db.exec(`
+  CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_offset TEXT UNIQUE,
+      content TEXT
+  );
+`);
+
+// Configuração CORRETA para arquivos estáticos
+app.use('/static', express.static(join(__dirname, 'static'))); // Serve /static/css e /static/js
+
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, '/templates/index.html'));
+});
+
+io.on('connection',async (socket) => {
+  console.log('a user connected');
+
+// Envia mensagem de boas-vindas apenas para o novo usuário
+  socket.emit('chat message', 'Welcome to socketio chat!');
+
+// Envia mensagem para todos os usuários, exceto o novo usuário
+  socket.broadcast.emit('chat message', 'A new user has joined the chat');
+
+socket.on('chat message', async (msg, clientOffset, callback) => {
+  let result;
+  try {
+    result = await db.run('INSERT INTO messages (content) VALUES (?)', msg, clientOffset);
+  } catch (e) {
+    if (e.errno === 19 /* SQLITE_CONSTRAINT */ ) {
+        // a mensagem já foi inserida, então notificamos o cliente
+        callback();
+      } else {
+        // nada a fazer, apenas deixe o cliente tentar novamente
+      }
+      return;
+  }
+  io.emit('chat message', msg, result.lastID);
+  callback()
+  });
+
+  if (!socket.recovered) {
+    try {
+      await db.each(
+        'SELECT id, content FROM messages WHERE id > ?',
+        [socket.handshake.auth.serverOffset || 0],
+        (_err, row) => {
+          socket.emit('chat message', row.content, row.id);
+        }
+      );
+    } catch (e) {
+      console.error('Recovery failed:', e);
+    }
+  }
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+  
+});
+
+server.listen(3000, () => {
+  console.log('server running at http://localhost:3000');
+});
+```
+
+Dessa forma, a restrição UNIQUE  na coluna cliente_offset evita duplicação da mensagem 
+
+<aside>
+🚨Cuidado:
+Não se esqueça de reconhecer o evento, caso contrário o cliente continuará tentando
+</aside>
