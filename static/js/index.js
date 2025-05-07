@@ -17,7 +17,7 @@ form.addEventListener('submit', (e) => {
   e.preventDefault();
   if (input.value) {
     // calcula um deslocamento único para cada mensagem
-    const clientOffset = '${socket.id}-S{counter++}';
+    const clientOffset = `${socket.id}-${counter++}`;
     socket.emit('chat message', input.value, clientOffset);
     input.value = '';
   }
