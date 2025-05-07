@@ -1137,3 +1137,6 @@ Isso gerará um thread de trabalho por CPU disponível na sua máquina. Cada aba
 🚨
 Na maioria dos casos, você também precisa garantir que todas as solicitações HTTP de uma sessão Socket.IO cheguem ao mesmo servidor (também conhecido como "sessão persistente"). Isso não é necessário aqui, pois cada servidor Socket.IO tem sua própria porta.
 </aside>
+
+# Visão final do projeto
+![alt text]({2A9434AC-02C8-463E-AEE5-6B31C38C12EF}.png)
