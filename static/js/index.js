@@ -1,4 +1,4 @@
-let conter = 0;
+let counter = 0;
 const socket = io({
   auth: {
     serverOffset: 0
@@ -18,8 +18,9 @@ form.addEventListener('submit', (e) => {
   if (input.value) {
     // calcula um deslocamento único para cada mensagem
     const clientOffset = `${socket.id}-${counter++}`;
-    socket.emit('chat message', input.value, clientOffset);
-    input.value = '';
+    socket.emit('chat message', input.value, clientOffset, () => {
+  input.value = '';
+});
   }
 });
 
