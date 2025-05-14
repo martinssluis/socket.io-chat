@@ -1,3 +1,34 @@
+# Estrutura do Projeto
+```
+socketio-chat/
+├── .vscode/                  # Configurações do VSCode (opcional)
+│   ├── launch.json           # Configuração de debug
+│   └── settings.json         # Configurações do workspace
+│
+├── static/                   # Arquivos estáticos
+│   ├── css/
+│   │   └── index.css         # Estilos do chat
+│   ├── js/
+│   │   └── index.js          # Lógica do cliente
+│   └── imgs/                 # Imagens (se necessário)
+│       ├── screenshot1.png   # Exemplo de nome para as imagens atuais
+│       ├── screenshot2.png
+│       └── screenshot3.png
+│
+├── templates/                # Views HTML
+│   └── index.html            # Página principal do chat
+│
+├── src/                      # Código fonte do servidor
+│   └── main.js               # Ponto de entrada (antigo main.js na raiz)
+│
+├── database/                 # Dados persistentes
+│   └── chat.db               # Banco SQLite
+│
+├── .gitignore                # Arquivos ignorados pelo Git
+├── package.json              # Dependências e scripts
+├── package-lock.json         # Versões exatas das dependências
+└── README.md                 # Documentação do projeto
+```
 # Inicialização do projeto
 
 O primeiro passo é criar uma simples página HTML que exiba o formulário e uma lista de mensagens. 
