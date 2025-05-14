@@ -1,3 +1,30 @@
+# Socket.io Chat
+
+O Socket.io Chat é uma aplicação web em tempo real que permite comunicação instantânea entre usuários. Desenvolvido com Node.js e Express, utiliza Socket.io para conexões bidirecionais e SQLite para persistência de mensagens.
+
+## Funcionalidades
+
+**Chat em Tempo Real:**
+- Troca instantânea de mensagens entre usuários
+- Notificações de entrada/saída na sala
+
+**Resiliência:**
+- Recuperação de conexões interrompidas
+- Sincronização de mensagens perdidas durante desconexões
+
+**Escalabilidade:**
+- Suporte a múltiplas instâncias via cluster Node.js
+- Adaptador para distribuição de eventos entre workers
+
+**Segurança:**
+- Garantia de entrega "exatamente uma vez" para mensagens
+- Identificação única de clientes
+
+## Pré-requisitos
+
+- Node.js 18+
+- SQLite3 (para armazenamento local)
+- NPM 9+
 # Estrutura do Projeto
 ```
 socketio-chat/
